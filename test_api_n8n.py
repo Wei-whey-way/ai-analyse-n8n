@@ -9,6 +9,8 @@ import time
 import os
 from pathlib import Path
 
+from test_api import test_queue_status, test_upload_analysis, cleanup_analysis
+
 # API configuration
 API_BASE_URL = "http://localhost:8000"
 
@@ -28,66 +30,125 @@ def test_health_check():
         print(f"❌ Health check error: {e}")
         return False
 
-def test_upload_analysis(pdf_file_path: str, max_wait_time: int = 300):
-    """Test file upload and analysis"""
-    print(f"\n📤 Now uploading file for analysis in n8n: {pdf_file_path}")
+# def test_upload_analysis(pdf_file_path: str, max_wait_time: int = 300):
+#     """Test file upload and analysis"""
+#     print(f"\n📤 Now uploading file for analysis in n8n: {pdf_file_path}")
     
-    if not os.path.exists(pdf_file_path):
-        print(f"❌ File not found: {pdf_file_path}")
-        return None
+#     if not os.path.exists(pdf_file_path):
+#         print(f"❌ File not found: {pdf_file_path}")
+#         return None
     
-    try:
-        """Wait for analysis to complete"""
-        print(f"\n⏳ Waiting for analysis to complete...")
-        start_time = time.time()
-        while time.time() - start_time < max_wait_time:
-            try:
-                # Upload file
-                with open(pdf_file_path, 'rb') as f:
-                    files = {'file': (os.path.basename(pdf_file_path), f, 'application/pdf')}
-                    response = requests.post(
-                        # 'http://localhost:5678/webhook-test/b1a597a0-75f6-4ea4-8e49-8c061fba5c93',
-                        'http://localhost:5678/webhook/b1a597a0-75f6-4ea4-8e49-8c061fba5c93',
-                        files=files,
-                        # params={'analysis_type': 'full'}
-                    )
+#     try:
+#         """Wait for analysis to complete"""
+#         print(f"\n⏳ Waiting for analysis to complete...")
+#         start_time = time.time()
+#         while time.time() - start_time < max_wait_time:
+#             try:
+#                 # Upload file
+#                 with open(pdf_file_path, 'rb') as f:
+#                     files = {'file': (os.path.basename(pdf_file_path), f, 'application/pdf')}
+#                     response = requests.post(
+#                         # 'http://localhost:5678/webhook-test/b1a597a0-75f6-4ea4-8e49-8c061fba5c93',
+#                         'http://localhost:5678/webhook/b1a597a0-75f6-4ea4-8e49-8c061fba5c93',
+#                         files=files,
+#                         # params={'analysis_type': 'full'}
+#                     )
                 
-                # print('Debug successful n8n analysis', response.json())
-                if response.status_code == 200:
-                    data = response.json()
-                    print(f"✅ n8n retrieval successful: {data.keys()}")
-                    return data
-                else:
-                    print(f"❌ Upload failed: {response.status_code} - {response.text}")
-                    return
-            except Exception as e:
-                print(f"⚠️  Status check error: {e}")
+#                 # print('Debug successful n8n analysis', response.json())
+#                 if response.status_code == 200:
+#                     data = response.json()
+#                     print(f"✅ n8n retrieval successful: {data.keys()}")
+#                     return data
+#                 else:
+#                     print(f"❌ Upload failed: {response.status_code} - {response.text}")
+#                     return
+#             except Exception as e:
+#                 print(f"⚠️  Status check error: {e}")
             
-            time.sleep(5)  # Wait 5 seconds before checking again
+#             time.sleep(5)  # Wait 5 seconds before checking again
         
-        print(f"⏰ Timeout waiting for analysis to complete")
-        exit
+#         print(f"⏰ Timeout waiting for analysis to complete")
+#         exit
 
-    except Exception as e:
-        print(f"❌ Upload error: {e}")
-        return
+#     except Exception as e:
+#         print(f"❌ Upload error: {e}")
+#         return
 
-def get_results(state: dict):
+def wait_for_completion(request_id: str, max_wait_time: int = 300):
+    """Wait for analysis to complete"""
+    print(f"\n⏳ Waiting for analysis {request_id} to complete...")
+    
+    start_time = time.time()
+    while time.time() - start_time < max_wait_time:
+        try:
+            response = requests.get(f"{API_BASE_URL}/status/{request_id}")
+            
+            if response.status_code == 200:
+                data = response.json()
+                status = data['status']
+                
+                if status == 'completed':
+                    print(f"✅ Analysis completed!")
+                    return True
+                elif status == 'failed':
+                    print(f"❌ Analysis failed!")
+                    return False
+                elif status in ['queued', 'processing']:
+                    print(f"⏳ Status: {status}...")
+                else:
+                    print(f"❓ Unknown status: {status}")
+            else:
+                print(f"⚠️  Status check failed: {response.status_code}")
+                
+        except Exception as e:
+            print(f"⚠️  Status check error: {e}")
+        
+        time.sleep(5)  # Wait 5 seconds before checking again
+    
+    print(f"⏰ Timeout waiting for analysis to complete")
+    return False
+
+def get_results(request_id: str):
     """Get analysis results"""
-    # print(f"\n📊 Getting results for {state}...")
+    print(f"\n📊 Getting results for {request_id}...")
     
     try:
-        #Output results
-        print("✅ Results retrieved successfully!")
-        print(f"📈 Metrics: {state['Metrics']}")
-        print(f"📊 Ratios: {state['Ratios']}")
-        print(f"🤖 Analysis: {state['Analysis']}")
-        # print(f"⏱️  Processing time: {state['processing_time']:.2f} seconds")
-        return
-    
+        response = requests.get(f"{API_BASE_URL}/results/{request_id}")
+        if response.status_code == 200:
+            data = response.json()
+
+            print('get_results tst_api_n8n debugging data', data, '\n\n')
+            print("✅ Results retrieved successfully!")
+            print(f"📈 Metrics: {data['metrics']}")
+            print(f"📊 Ratios: {data['ratios']}")
+            print(f"🤖 Analysis: {data['analysis']}")
+            # print(f"🤖 Analysis: {data['analysis'][:200]}...")
+            print(f"⏱️  Processing time: {data['processing_time']:.2f} seconds")
+            return data
+        else:
+            print(f"❌ Failed to get results: {response.status_code} - {response.text}")
+            return None
+            
     except Exception as e:
         print(f"❌ Results retrieval error: {e}")
         return None
+
+# def get_results(state: dict):
+#     """Get analysis results"""
+#     # print(f"\n📊 Getting results for {state}...")
+    
+#     try:
+#         #Output results
+#         print("✅ Results retrieved successfully!")
+#         print(f"📈 Metrics: {state['Metrics']}")
+#         print(f"📊 Ratios: {state['Ratios']}")
+#         print(f"🤖 Analysis: {state['Analysis']}")
+#         # print(f"⏱️  Processing time: {state['processing_time']:.2f} seconds")
+#         return
+    
+#     except Exception as e:
+#         print(f"❌ Results retrieval error: {e}")
+#         return None
 
 def main():
     """Main test function"""
@@ -100,7 +161,7 @@ def main():
         return
     
     # Test queue status
-    # test_queue_status()
+    test_queue_status()
     
     # Look for PDF files in current directory
     pdf_files = list(Path(".").glob("*.pdf"))
@@ -119,18 +180,26 @@ def main():
     print(f"\n🎯 Testing with: {test_pdf}")
     
     # Test file upload analysis
-    state = test_upload_analysis(test_pdf)
-    
-    # Get results
-    if (state):
-        get_results(state)
-    else:
-        print("\n❌ Failed to retrieve results")
+    request_id = test_upload_analysis(test_pdf)
 
+    if request_id:
+        # Wait for completion
+        if wait_for_completion(request_id):
+            # Get results
+            results = get_results(request_id)
+            
+            if results:
+                print("\n🎉 Test completed successfully!")
+                
+                # Clean up
+                cleanup_analysis(request_id)
+            else:
+                print("\n❌ Failed to retrieve results")
+        else:
+            print("\n❌ Analysis did not complete in time")
     
     # Test queue status again
-    # test_queue_status()
+    test_queue_status()
 
 if __name__ == "__main__":
     main()
-    # n8n()

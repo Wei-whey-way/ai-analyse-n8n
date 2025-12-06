@@ -11,23 +11,7 @@ from datetime import datetime
 import json
 from pathlib import Path
 import pandas as pd  # For reading Excel files
-
-# Finance/PDF analysis
-from analyse_n8n import read_statement as read_pdf_statement
-from analyse_n8n import calculate_ratios as calculate_pdf_ratios
-from analyse_n8n import StatementState as PDFStatementState
-
-# Sales/Excel analysis
-from analyse_ba import read_statement as read_excel_statement
-from analyse_ba import calculate_ratios as calculate_excel_ratios
-# from analyse_ba import analyze_statement as analyze_excel_statement
-from analyse_ba import StatementState as ExcelStatementState
-
-# Combined/Business Advisory analysis
-from analyse_combined import (
-    CombinedState, 
-    run_financial_analysis, run_sales_analysis, combine_analyses
-)
+import requests
 
 # New imports for PDF/chart generation
 from reportlab.lib.pagesizes import A4
@@ -40,7 +24,6 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
-
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -83,6 +66,7 @@ class AnalysisResult(BaseModel):
     status: str
     metrics: Dict[str, float]
     ratios: Dict[str, str]
+    analysis: str
     text_length: int
     timestamp: str
     processing_time: float
@@ -147,41 +131,44 @@ async def process_analysis(request_id: str, file_path: str, analysis_type: str):
         # Update status to processing
         analysis_queue[request_id]["status"] = "processing"
         
-        # Create initial state
-        state = PDFStatementState(
-            file_path=file_path,
-            text="",
-            metrics={},
-            ratios={},
-        )
-        
-        print('Debugging state (before)', state)
-        
+        # print(f"\n🔍 Processing n8n analysis {request_id}...")
+
         # Execute analysis pipeline
-        if analysis_type in ["metrics", "full"]:
-            state = read_pdf_statement(state)
-        
-        if analysis_type in ["ratios", "full"] and state["metrics"]:
-            state = calculate_pdf_ratios(state)
+        if (analysis_type in ["metrics", "full"]) and (analysis_type in ["ratios", "full"]):
+            state = requests.post(
+                # 'http://localhost:5678/webhook-test/finance',
+                'http://localhost:5678/webhook/finance',
+                files= {'file': (os.path.basename(file_path), open(file_path, 'rb'), 'application/pdf')},
+            )
         
         # Calculate processing time
         processing_time = (datetime.now() - start_time).total_seconds()
         
-        print('Debugging state (after)', state)
+        if state.status_code == 200:
+            results = state.json()
 
-        # Create result
-        result = AnalysisResult(
-            request_id=request_id,
-            status="completed",
-            metrics=state["metrics"],
-            ratios=state["ratios"],
-            text_length=len(state["text"]),
-            timestamp=datetime.now().isoformat(),
-            processing_time=processing_time
-        )
+            # Create result
+            try:
+                result = AnalysisResult(
+                    request_id=request_id,
+                    status="completed",
+                    metrics=results["Metrics"],
+                    ratios=results["Ratios"],
+                    analysis=results["Analysis"],
+                    text_length=len(results["Analysis"]),
+                    timestamp=datetime.now().isoformat(),
+                    processing_time=processing_time
+                )
+
+                analysis_results[request_id] = result
+
+            except Exception as e:
+                raise Exception(f"Error creating AnalysisResult: {str(e)}")
+
+        else:
+            raise Exception(f"Analysis failed with status code {state.status_code}")
         
         # Store result
-        analysis_results[request_id] = result
         analysis_queue[request_id]["status"] = "completed"
         
         # Cleanup temporary file
@@ -205,40 +192,43 @@ async def process_analysis(request_id: str, file_path: str, analysis_type: str):
 
 async def process_excel_analysis(request_id: str, file_path: str, analysis_type: str):
     start_time = datetime.now()
+
     try:
+        # Update status to processing
         excel_analysis_queue[request_id]["status"] = "processing"
 
-        # Initialize state (similar to PDF StatementState)
-        state: ExcelStatementState = {
-            "file_path": file_path,
-            "text": "",
-            "metrics": {},
-            "ratios": {},
-            "analysis": ""
-        }
-
         # Step 1: Extract metrics
-        if analysis_type in ["metrics", "full"]:
-            state = read_excel_statement(state)
-
-        # Step 2: Calculate ratios (reuse existing calculate_ratios if compatible)
-        if analysis_type in ["ratios", "full"] and state["metrics"]:
-            state = calculate_excel_ratios(state)
+        if (analysis_type in ["metrics", "full"]) and (analysis_type in ["ratios", "full"]):
+            state = requests.post(
+                # 'http://localhost:5678/webhook-test/sales',
+                'http://localhost:5678/webhook/sales',
+                files= {'file': (os.path.basename(file_path), open(file_path, 'rb'), 'application/xlsx')},
+            )
+        
+        # print('Debugging process_excel_analysis response:', state, state.json())
 
         # Processing time
         processing_time = (datetime.now() - start_time).total_seconds()
 
-        # Store result
-        excel_analysis_results[request_id] = {
-            "request_id": request_id,
-            "status": "completed",
-            "metrics": state["metrics"],
-            "ratios": state["ratios"],
-            "text_length": len(state["text"]),
-            "timestamp": datetime.now().isoformat(),
-            "processing_time": processing_time
-        }
-        excel_analysis_queue[request_id]["status"] = "completed"
+        if state.status_code == 200:
+            results = state.json()
+
+            print('Debugging results from n8n Excel analysis:', results, '\n\n', results.keys())
+            # Store result
+            excel_analysis_results[request_id] = {
+                "request_id": request_id,
+                "status": "completed",
+                "metrics": results["Metrics"],
+                "ratios": results["Ratios"],
+                "analysis": results["Analysis"],
+                "text_length": len(results["Analysis"]),
+                "timestamp": datetime.now().isoformat(),
+                "processing_time": processing_time
+            }
+            excel_analysis_queue[request_id]["status"] = "completed"
+        
+        else:
+            raise Exception(f"Analysis failed with status code {state.status_code}")
 
     except Exception as e:
         processing_time = (datetime.now() - start_time).total_seconds()
@@ -257,71 +247,51 @@ async def process_excel_analysis(request_id: str, file_path: str, analysis_type:
 
 async def process_ba_analysis(request_id: str, file_path_finance: str, file_path_sales: str, analysis_type: str):
     start_time = datetime.now()
+
     try:
         ba_analysis_queue[request_id]["status"] = "processing"
 
         # Initialize finance and sales states
-        state_finance: PDFStatementState = {
-            "file_path": file_path_finance, "text": "", "metrics": {}, "ratios": {}, "analysis": ""
-        }
+        # state_finance: PDFStatementState = {
+        #     "file_path": file_path_finance, "text": "", "metrics": {}, "ratios": {}, "analysis": ""
+        # }
         
-        state_sales: ExcelStatementState = {
-            "file_path": file_path_sales, "text": "", "metrics": {}, "ratios": {}, "analysis": ""
-        }
+        # state_sales: ExcelStatementState = {
+        #     "file_path": file_path_sales, "text": "", "metrics": {}, "ratios": {}, "analysis": ""
+        # }
 
-        # Individual state analysis
-        if analysis_type in ["metrics", "full"]:
-            state_finance = read_pdf_statement(state_finance)
-            state_sales = read_excel_statement(state_sales)
+        with open(file_path_sales, 'rb') as f_sales, open(file_path_finance, 'rb') as f_finance:
+            files = {
+                'finance_file': (os.path.basename(file_path_finance), f_finance, 'application/pdf'),
+                'sales_file': (os.path.basename(file_path_sales), f_sales, 'application/xlsx'),
+            }
 
-        if analysis_type in ["ratios", "full"] and state_finance["metrics"]:
-            state_finance = calculate_pdf_ratios(state_finance)
-
-        # if analysis_type == "full" and state_finance["metrics"] and state_finance["ratios"]:
-            # state_finance = analyze_pdf_statement(state_finance)
-
-        if analysis_type in ["ratios", "full"] and state_sales["metrics"]:
-            state_sales = calculate_excel_ratios(state_sales)
-
-        # if analysis_type == "full" and state_sales["metrics"] and state_sales["ratios"]:
-        #     state_sales = analyze_excel_statement(state_sales)
-
-        # Initialize combined state
-        state_combined: CombinedState = {
-            "file_path_finance": file_path_finance,
-            "file_path_sales": file_path_sales,
-            # "analysis_finance": state_finance["analysis"],
-            # "analysis_sales": state_sales["analysis"],
-            # "combined_analysis": "",
-            # "combined_ratios": {}
-        }
-
-        # Combine analyses
-        # if state_combined["analysis_finance"] and state_combined["analysis_sales"]:
-            # state_combined = combine_analyses(state_combined)
-
-            # combined_ratios = {
-            #     "finance_ratios": state_finance.get("ratios", {}),
-            #     "sales_ratios": state_sales.get("ratios", {})
-            # }
+            state = requests.post(
+                "http://localhost:5678/webhook/combined",
+                files=files,
+                params={'analysis_type': 'full'}
+            )
 
         # Processing time
         processing_time = (datetime.now() - start_time).total_seconds()
 
-        # Store result
-        ba_analysis_results[request_id] = {
-            "request_id": request_id,
-            "status": "completed",
-            # "metrics": state_sales["metrics"], # Placeholder using sales variables
-            # "ratios": state_sales["ratios"], # Placeholder using sales variables
-            # "analysis": state_combined["combined_analysis"],
-            # "analysis_finance": state_finance["analysis"],
-            # "analysis_sales": state_sales["analysis"],
-            "text_length": len(state_sales["text"]) + len(state_finance["text"]),
-            "timestamp": datetime.now().isoformat(),
-            "processing_time": processing_time
-        }
-        ba_analysis_queue[request_id]["status"] = "completed"
+        if state.status_code == 200:
+            results = state.json()
+
+            print('Debugging results from n8n BA analysis:', results, '\n\n', results.keys())
+
+            # Store result
+            ba_analysis_results[request_id] = {
+                "request_id": request_id,
+                "status": "completed",
+                "analysis": results["analysis"],
+                "analysis_finance": results["analysis_finance"],
+                "analysis_sales": results["analysis_sales"],
+                "text_length": len(results["analysis"]),
+                "timestamp": datetime.now().isoformat(),
+                "processing_time": processing_time
+            }
+            ba_analysis_queue[request_id]["status"] = "completed"
 
     except Exception as e:
         processing_time = (datetime.now() - start_time).total_seconds()
@@ -330,14 +300,13 @@ async def process_ba_analysis(request_id: str, file_path_finance: str, file_path
             "status": "failed",
             "metrics": {},
             "ratios": {},
-            # "analysis": f"Analysis failed: {str(e)}",
+            "analysis": f"Analysis failed: {str(e)}",
             "text_length": 0,
             "timestamp": datetime.now().isoformat(),
             "processing_time": processing_time
         }
         ba_analysis_queue[request_id]["status"] = "failed"
         ba_analysis_queue[request_id]["error"] = str(e)
-
 
 # API Endpoints
 @app.get("/", response_model=Dict[str, Any])
