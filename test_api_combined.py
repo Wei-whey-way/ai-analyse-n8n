@@ -156,12 +156,31 @@ def cleanup_analysis(request_id: str):
     except Exception as e:
         print(f"❌ Cleanup error: {e}")
         return False
+    
+
+# def get_results(data: dict):
+#     """Get analysis results"""
+#     # print(f"\n📊 Getting results for {request_id}...")
+    
+#     try:
+#         print("✅ Results retrieved successfully!")
+#         # print(f"📈 Metrics: {data['metrics']}")
+#         # print(f"📊 Ratios: {data['ratios']}")
+#         print(f"💰 Finance Analysis: {data['analysis_finance'][:200]}...")
+#         print(f"\n💼 Sales Analysis: {data['analysis_sales'][:200]}...")
+#         print(f"\n🤖 Business Advisory Analysis: {data['analysis']}...")
+#         # print(f"⏱️  Processing time: {data['processing_time']:.2f} seconds")
+#         return
+            
+#     except Exception as e:
+#         print(f"❌ Results retrieval error: {e}")
+#         return None
 
 def main():
     """Main test function"""
-    print("🚀 Business Advisory Analysis (Combination) API Test Client")
+    print("🚀 Business Advisory Analysis Combined API Test Client (API)")
     print("=" * 50)
-    
+
     # Test health check
     if not test_health_check():
         print("❌ API is not running. Please start the API server first.")
@@ -169,7 +188,7 @@ def main():
     
     # Test queue status
     test_queue_status()
-    
+        
     # Look for excel files in current directory
     excel_files = [f for f in Path(".").iterdir() if f.suffix in [".xlsx", ".xls"]]
     pdf_files = [f for f in Path(".").iterdir() if f.suffix == ".pdf"]
@@ -193,6 +212,7 @@ def main():
     # Test file upload analysis
     request_id = test_upload_analysis(test_excel, test_pdf)
     
+    # Get results
     if request_id:
         # Wait for completion
         if wait_for_completion(request_id):
@@ -213,6 +233,11 @@ def main():
     
     # Test queue status again
     test_queue_status()
+    # if (state):
+    #     get_results(state)
+    # else:
+    #     print("\n❌ Failed to retrieve results")
 
+    
 if __name__ == "__main__":
     main()

@@ -57,6 +57,7 @@ logs/
 uploads/
 temp/
 tmp/
+to delete/
 *.tmp
 
 # Database

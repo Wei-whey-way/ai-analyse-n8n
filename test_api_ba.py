@@ -58,35 +58,50 @@ def test_upload_analysis(xlsx_file_path: str):
         print(f"❌ Upload error: {e}")
         return None
 
-# def test_file_analysis(xlsx_file_path: str):
-#     """Test analysis of existing file"""
-#     print(f"\n📁 Testing existing file analysis for: {xlsx_file_path}")
+# def test_upload_analysis(xlsx_file_path: str, max_wait_time: int = 300):
+#     """Test file upload and analysis"""
+#     print(f"\n📤 Testing file upload analysis for: {xlsx_file_path}")
     
 #     if not os.path.exists(xlsx_file_path):
 #         print(f"❌ File not found: {xlsx_file_path}")
 #         return None
     
 #     try:
-#         payload = {
-#             "file_path": xlsx_file_path,
-#             "analysis_type": "full"
-#         }
+#         """Wait for analysis to complete"""
+#         print(f"\n⏳ Waiting for analysis to complete...")
+#         start_time = time.time()
+#         while time.time() - start_time < max_wait_time:
+#             try:
+#                 # Upload file
+#                 with open(xlsx_file_path, 'rb') as f:
+#                     files = {'file': (os.path.basename(xlsx_file_path), f, 'application/xlsx')}
+#                     response = requests.post(
+#                         # 'http://localhost:5678/webhook-test/sales',
+#                         'http://localhost:5678/webhook/sales',
+#                         files=files,
+#                         # params={'analysis_type': 'full'}
+#                     )
+                
+#                 # print('Debug output', response)
+#                 # return
+                
+#                 if response.status_code == 200:
+#                     data = response.json()
+#                     print(f"✅ n8n retrieval successful: {data.keys()}")
+#                     return data
+#                 else:
+#                     print(f"❌ Upload failed: {response.status_code} - {response.text}")
+#                     return None
+#             except Exception as e:
+#                 print(f"⚠️  Status check error: {e}")
+            
+#             time.sleep(5)  # Wait 5 seconds before checking again
         
-#         response = requests.post(
-#             f"{API_BASE_URL}/analyze/spreadsheet/upload",
-#             json=payload
-#         )
-        
-#         if response.status_code == 200:
-#             data = response.json()
-#             print(f"✅ File analysis started: {data}")
-#             return data['request_id']
-#         else:
-#             print(f"❌ File analysis failed: {response.status_code} - {response.text}")
-#             return None
+#         print(f"⏰ Timeout waiting for analysis to complete")
+#         exit
             
 #     except Exception as e:
-#         print(f"❌ File analysis error: {e}")
+#         print(f"❌ Upload error: {e}")
 #         return None
 
 def wait_for_completion(request_id: str, max_wait_time: int = 300):
@@ -97,9 +112,12 @@ def wait_for_completion(request_id: str, max_wait_time: int = 300):
     while time.time() - start_time < max_wait_time:
         try:
             response = requests.get(f"{API_BASE_URL}/status/spreadsheet/{request_id}")
+
             if response.status_code == 200:
                 data = response.json()
                 status = data['status']
+
+                print('test_api_ba.py: debugging data', data)
                 
                 if status == 'completed':
                     print(f"✅ Analysis completed!")
@@ -122,6 +140,23 @@ def wait_for_completion(request_id: str, max_wait_time: int = 300):
     print(f"⏰ Timeout waiting for analysis to complete")
     return False
 
+# def get_results(state: dict):
+#     """Get analysis results"""
+# #     print(f"\n📊 Getting results for {request_id}...")
+    
+#     try:
+#         #Output results
+#         print("✅ Results retrieved successfully!")
+#         print(f"📈 Metrics: {state['Metrics']}")
+#         print(f"📊 Ratios: {state['Ratios']}")
+#         print(f"🤖 Analysis: {state['Analysis']}")
+#         # print(f"⏱️  Processing time: {state['processing_time']:.2f} seconds")
+#         return
+    
+#     except Exception as e:
+#         print(f"❌ Results retrieval error: {e}")
+#         return None
+
 def get_results(request_id: str):
     """Get analysis results"""
     print(f"\n📊 Getting results for {request_id}...")
@@ -133,7 +168,8 @@ def get_results(request_id: str):
             print("✅ Results retrieved successfully!")
             print(f"📈 Metrics: {data['metrics']}")
             print(f"📊 Ratios: {data['ratios']}")
-            print(f"🤖 Analysis: {data['analysis'][:200]}...")
+            print(f"🤖 Analysis: {data['analysis']}")
+            # print(f"🤖 Analysis: {data['analysis'][:200]}...")
             print(f"⏱️  Processing time: {data['processing_time']:.2f} seconds")
             return data
         else:
@@ -179,19 +215,11 @@ def cleanup_analysis(request_id: str):
     except Exception as e:
         print(f"❌ Cleanup error: {e}")
         return False
-
+    
 def main():
     """Main test function"""
-    print("🚀 Business Advisory Analysis API Test Client")
+    print("🚀 Business Advisory Analysis API Test Client (n8n)")
     print("=" * 50)
-    
-    # Test health check
-    if not test_health_check():
-        print("❌ API is not running. Please start the API server first.")
-        return
-    
-    # Test queue status
-    test_queue_status()
     
     # Look for excel files in current directory
     excel_files = [f for f in Path(".").iterdir() if f.suffix in [".xlsx", ".xls"]]
@@ -205,7 +233,7 @@ def main():
     for pdf_file in excel_files:
         print(f"   - {pdf_file}")
     
-    # Test with first PDF file
+    # Test with first Excel file
     test_excel = str(excel_files[0])
     print(f"\n🎯 Testing with: {test_excel}")
     
@@ -227,8 +255,6 @@ def main():
                 print("\n❌ Failed to retrieve results")
         else:
             print("\n❌ Analysis did not complete in time")
-    else:
-        print("\n❌ Failed to start analysis")
     
     # Test queue status again
     test_queue_status()

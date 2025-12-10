@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Test client for the Financial Statement Analysis API
+Test client for the Financial Statement Analysis API (n8n)
 """
 
 import requests
@@ -27,6 +27,50 @@ def test_health_check():
     except Exception as e:
         print(f"❌ Health check error: {e}")
         return False
+
+# def test_upload_analysis(pdf_file_path: str, max_wait_time: int = 300):
+#     """Test file upload and analysis"""
+#     print(f"\n📤 Now uploading file for analysis in n8n: {pdf_file_path}")
+    
+#     if not os.path.exists(pdf_file_path):
+#         print(f"❌ File not found: {pdf_file_path}")
+#         return None
+    
+#     try:
+#         """Wait for analysis to complete"""
+#         print(f"\n⏳ Waiting for analysis to complete...")
+#         start_time = time.time()
+#         while time.time() - start_time < max_wait_time:
+#             try:
+#                 # Upload file
+#                 with open(pdf_file_path, 'rb') as f:
+#                     files = {'file': (os.path.basename(pdf_file_path), f, 'application/pdf')}
+#                     response = requests.post(
+#                         # 'http://localhost:5678/webhook-test/b1a597a0-75f6-4ea4-8e49-8c061fba5c93',
+#                         'http://localhost:5678/webhook/b1a597a0-75f6-4ea4-8e49-8c061fba5c93',
+#                         files=files,
+#                         # params={'analysis_type': 'full'}
+#                     )
+                
+#                 # print('Debug successful n8n analysis', response.json())
+#                 if response.status_code == 200:
+#                     data = response.json()
+#                     print(f"✅ n8n retrieval successful: {data.keys()}")
+#                     return data
+#                 else:
+#                     print(f"❌ Upload failed: {response.status_code} - {response.text}")
+#                     return
+#             except Exception as e:
+#                 print(f"⚠️  Status check error: {e}")
+            
+#             time.sleep(5)  # Wait 5 seconds before checking again
+        
+#         print(f"⏰ Timeout waiting for analysis to complete")
+#         exit
+
+#     except Exception as e:
+#         print(f"❌ Upload error: {e}")
+#         return
 
 def test_upload_analysis(pdf_file_path: str):
     """Test file upload and analysis"""
@@ -88,7 +132,7 @@ def test_file_analysis(pdf_file_path: str):
     except Exception as e:
         print(f"❌ File analysis error: {e}")
         return None
-
+    
 def wait_for_completion(request_id: str, max_wait_time: int = 300):
     """Wait for analysis to complete"""
     print(f"\n⏳ Waiting for analysis {request_id} to complete...")
@@ -97,6 +141,7 @@ def wait_for_completion(request_id: str, max_wait_time: int = 300):
     while time.time() - start_time < max_wait_time:
         try:
             response = requests.get(f"{API_BASE_URL}/status/{request_id}")
+            
             if response.status_code == 200:
                 data = response.json()
                 status = data['status']
@@ -122,28 +167,48 @@ def wait_for_completion(request_id: str, max_wait_time: int = 300):
     print(f"⏰ Timeout waiting for analysis to complete")
     return False
 
-def get_results(state: dict):
+def get_results(request_id: str):
     """Get analysis results"""
-    print(f"\n📊 Getting results for {state}...")
+    print(f"\n📊 Getting results for {request_id}...")
     
     try:
-        return None
-        # response = requests.get(f"{API_BASE_URL}/results/{request_id}")
-        # if response.status_code == 200:
-        #     data = response.json()
-        #     print("✅ Results retrieved successfully!")
-        #     print(f"📈 Metrics: {data['metrics']}")
-        #     print(f"📊 Ratios: {data['ratios']}")
-        #     print(f"🤖 Analysis: {data['analysis'][:200]}...")
-        #     print(f"⏱️  Processing time: {data['processing_time']:.2f} seconds")
-        #     return data
-        # else:
-        #     print(f"❌ Failed to get results: {response.status_code} - {response.text}")
-        #     return None
+        response = requests.get(f"{API_BASE_URL}/results/{request_id}")
+
+        if response.status_code == 200:
+            data = response.json()
+
+            print('get_results tst_api_n8n debugging data', data, '\n\n')
+            print("✅ Results retrieved successfully!")
+            print(f"📈 Metrics: {data['metrics']}")
+            print(f"📊 Ratios: {data['ratios']}")
+            print(f"🤖 Analysis: {data['analysis']}")
+            # print(f"🤖 Analysis: {data['analysis'][:200]}...")
+            print(f"⏱️  Processing time: {data['processing_time']:.2f} seconds")
+            return data
+        else:
+            print(f"❌ Failed to get results: {response.status_code} - {response.text}")
+            return None
             
     except Exception as e:
         print(f"❌ Results retrieval error: {e}")
         return None
+
+# def get_results(state: dict):
+#     """Get analysis results"""
+#     # print(f"\n📊 Getting results for {state}...")
+    
+#     try:
+#         #Output results
+#         print("✅ Results retrieved successfully!")
+#         print(f"📈 Metrics: {state['Metrics']}")
+#         print(f"📊 Ratios: {state['Ratios']}")
+#         print(f"🤖 Analysis: {state['Analysis']}")
+#         # print(f"⏱️  Processing time: {state['processing_time']:.2f} seconds")
+#         return
+    
+#     except Exception as e:
+#         print(f"❌ Results retrieval error: {e}")
+#         return None
 
 def test_queue_status():
     """Test queue status endpoint"""
@@ -183,7 +248,7 @@ def cleanup_analysis(request_id: str):
 
 def main():
     """Main test function"""
-    print("🚀 Financial Statement Analysis API Test Client")
+    print("🚀 Financial Statement Analysis API Test Client (n8n)")
     print("=" * 50)
     
     # Test health check
@@ -212,7 +277,7 @@ def main():
     
     # Test file upload analysis
     request_id = test_upload_analysis(test_pdf)
-    
+
     if request_id:
         # Wait for completion
         if wait_for_completion(request_id):
@@ -228,8 +293,6 @@ def main():
                 print("\n❌ Failed to retrieve results")
         else:
             print("\n❌ Analysis did not complete in time")
-    else:
-        print("\n❌ Failed to start analysis")
     
     # Test queue status again
     test_queue_status()

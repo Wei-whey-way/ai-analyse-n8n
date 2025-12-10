@@ -140,7 +140,7 @@ async def process_analysis(request_id: str, file_path: str, analysis_type: str):
                 'http://localhost:5678/webhook/finance',
                 files= {'file': (os.path.basename(file_path), open(file_path, 'rb'), 'application/pdf')},
             )
-        
+
         # Calculate processing time
         processing_time = (datetime.now() - start_time).total_seconds()
         
@@ -204,8 +204,8 @@ async def process_excel_analysis(request_id: str, file_path: str, analysis_type:
                 'http://localhost:5678/webhook/sales',
                 files= {'file': (os.path.basename(file_path), open(file_path, 'rb'), 'application/xlsx')},
             )
-        
-        # print('Debugging process_excel_analysis response:', state, state.json())
+
+        # print('Debugging state from n8n Excel analysis:', state, '\n\n', state.keys())
 
         # Processing time
         processing_time = (datetime.now() - start_time).total_seconds()
@@ -237,7 +237,7 @@ async def process_excel_analysis(request_id: str, file_path: str, analysis_type:
             "status": "failed",
             "metrics": {},
             "ratios": {},
-            # "analysis": f"Analysis failed: {str(e)}",
+            "analysis": f"Analysis failed: {str(e)}",
             "text_length": 0,
             "timestamp": datetime.now().isoformat(),
             "processing_time": processing_time
@@ -345,8 +345,8 @@ async def analyze_upload(
         raise HTTPException(status_code=400, detail="Invalid analysis_type. Use 'metrics', 'ratios', or 'full'")
     
     # Check API key
-    if not os.getenv("GOOGLE_API_KEY") and analysis_type == "full":
-        raise HTTPException(status_code=500, detail="Google API key not configured")
+    # if not os.getenv("GOOGLE_API_KEY") and analysis_type == "full":
+    #     raise HTTPException(status_code=500, detail="Google API key not configured")
     
     try:
         # Generate request ID
@@ -362,7 +362,7 @@ async def analyze_upload(
             "analysis_type": analysis_type,
             "timestamp": datetime.now().isoformat()
         }
-        
+
         # Start background processing
         background_tasks.add_task(process_analysis, request_id, file_path, analysis_type)
         
@@ -465,8 +465,8 @@ async def analyze_existing_file(
         raise HTTPException(status_code=404, detail="File not found")
     
     # Check API key
-    if not os.getenv("GOOGLE_API_KEY") and request.analysis_type == "full":
-        raise HTTPException(status_code=500, detail="Google API key not configured")
+    # if not os.getenv("GOOGLE_API_KEY") and request.analysis_type == "full":
+    #     raise HTTPException(status_code=500, detail="Google API key not configured")
     
     try:
         # Generate request ID
@@ -538,11 +538,9 @@ async def get_excel_status(request_id: str):
         raise HTTPException(status_code=404, detail="Request ID not found")
     
     queue_info = excel_analysis_queue[request_id]
-    # print('debugging queue_info:', queue_info)
 
     if queue_info["status"] == "completed" and request_id in excel_analysis_results:
         result = excel_analysis_results[request_id]
-        # print('Debugging app.get successful\n', f'Request_id {request_id}\nResult {result}\nQueue info: {queue_info}')
         return {
             "request_id": request_id, 
             "status": "completed", 
