@@ -1,0 +1,847 @@
+{
+  "name": "Business Advisory Analysis Sales",
+  "nodes": [
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{$json}}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        720,
+        16
+      ],
+      "id": "f70eba3a-6270-44d1-82ff-dce92c66f2d4",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "The URL of the Google search query for the term is \"I AM A BANANA\"",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        192,
+        400
+      ],
+      "id": "2d4de583-4038-40ae-aeac-e7693115d042",
+      "name": "Respond to Webhook (Text)"
+    },
+    {
+      "parameters": {
+        "content": "### Step 3 Profit Analysis\n\n$json refers to the current item only. So need to use item(x) to iterate ratios",
+        "height": 627,
+        "width": 726,
+        "color": 7
+      },
+      "id": "9d3e65fe-bf5c-496c-8585-34d810ba195a",
+      "name": "Sticky Note5",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        128,
+        -80
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        192,
+        224
+      ],
+      "id": "5932acb2-6500-4cbf-b26a-b4cb0b4bda7e",
+      "name": "Google Gemini Chat Model2",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "BXIQDIDhaS8bAUsD",
+          "name": "Google Gemini(PaLM) Api account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "### Step 1: Read and extract data from [xls, xlsx, csv]",
+        "height": 627,
+        "width": 838,
+        "color": 7
+      },
+      "id": "3f8f65bd-d611-491b-9592-52a503924563",
+      "name": "Sticky Note1",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1200,
+        -80
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "### Step 2: Calculate ratios",
+        "height": 627,
+        "width": 310,
+        "color": 7
+      },
+      "id": "7cbc1b3a-157c-410c-8f24-50a0cae71092",
+      "name": "Sticky Note4",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -272,
+        -80
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sales",
+        "responseMode": "responseNode",
+        "options": {
+          "rawBody": true
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1168,
+        64
+      ],
+      "id": "022df839-6b3c-4b8d-8194-eeac29246977",
+      "name": "Webhook1",
+      "webhookId": "3a10c93a-304d-4cb2-8d19-ba1dedba1c2a"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        -512,
+        368
+      ],
+      "id": "18e9f4e9-bd97-4db8-a99c-8d9f42ae7f33",
+      "name": "Respond to Webhook1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5215dd26-09d3-4234-b70c-9d4d431c1098",
+              "name": "Gross Margin",
+              "value": "={{ (($json.metrics['Total Revenue'] - $json.metrics['Total Cost of Sales'])/$json.metrics['Total Revenue'] * 100).toFixed(2) }} ",
+              "type": "number"
+            },
+            {
+              "id": "9fd1e0b5-dfb7-4695-89da-cb09529534b3",
+              "name": "Net Profit Margin",
+              "value": "={{ (($json.metrics[\"Net Profit\"]/$json.metrics[\"Total Revenue\"]) * 100).toFixed(2) }}",
+              "type": "number"
+            },
+            {
+              "id": "67a0ca9e-cd22-4709-a87a-c6c1258ec954",
+              "name": "Profit Before Tax Margin",
+              "value": "={{\n  (() => {\n    const pbt = $json.metrics[\"Profit before Tax\"];\n    const revenue  = $json.metrics[\"Total Revenue\"];\n\n    // Treat missing/null as invalid\n    if (pbt == null || revenue == null) {\n      return null;\n    }\n\n    const ratio = (pbt / revenue) * 100;\n\n    // Guard against NaN and Infinity\n    if (isNaN(ratio) || !isFinite(ratio)) {\n      return null;\n    }\n\n    return ratio.toFixed(2);\n  })()\n}}\n",
+              "type": "number"
+            },
+            {
+              "id": "0894aaf6-2be6-4cfc-ac1d-cc4c0ccb6930",
+              "name": "Expense Ratio",
+              "value": "={{ (($json.metrics[\"Total Expenses\"]/$json.metrics[\"Total Revenue\"]) * 100).toFixed(2) }}",
+              "type": "number"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -176,
+        192
+      ],
+      "id": "3b580201-2bc3-49ae-b9bb-0d6a2f578ffb",
+      "name": "Calculate Values (Includes profit before tax margin)"
+    },
+    {
+      "parameters": {
+        "jsCode": "const m = $input.first().json;\nvar ratios = {}\n// console.log(m)\n\n// Collect all total sale value (list)\nif (\"Date\" in m){\n  const values = Object.values(m['Total Sale Value']);\n  // console.log(values)\n  \n  ratios['Total Sale'] = values.reduce((sum, v) => sum + v, 0);\n  // ratios[\"Total Sale\"] = sum()\n}\n\n// Collect channel + revenue\nif (\"Channel\" in m && \"Total Sale Value\" in m){\n  const channels = m[\"Channel\"]\n  const values = m[\"Total Sale Value\"]\n  var channel_data = {}\n  \n  for (i in channels){\n    // console.log(channels[i])\n\n    if (!(channels[i] in channel_data)){\n      channel_data[channels[i]] = []\n    }\n    // console.log(values[i])\n    channel_data[channels[i]].push(values[i])\n  }\n}\n\n// Collect salesperson + revenue\nif (\"Sales Person\" in m && \"Total Sale Value\" in m){\n  const salesperson_list = m['Sales Person'];\n  const sales_list = m['Total Sale Value'];\n  var sales_map = {}\n\n  for (i in salesperson_list){\n    person = salesperson_list[i]\n    // console.log(person)\n\n    if (!sales_map[person]){\n      sales_map[person] = [];\n    }\n    sales_map[person].push(sales_list[i])\n  } \n}\n\n// Collect customers (list)\nif (\"Customer Id\" in m){\n  const id_list = m[\"Customer Id\"]\n  \n  var customer_id_counter = {}\n  for (i in id_list){\n    const id = id_list[i]\n    \n    customer_id_counter[id] = (customer_id_counter[id] || 0) + 1;\n  }\n\n  // console.log(customer_id_counter);\n}\n\nreturn [\n  {channel_data},\n  {sales_map},\n  {customer_id_counter}\n]"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -176,
+        16
+      ],
+      "id": "754788d3-21b8-467a-b0e3-b30d1c92c61c",
+      "name": "Calculate Financial Ratios"
+    },
+    {
+      "parameters": {
+        "jsCode": "const metrics = $('Extract rows containing Sales data').first().json.metrics\n\nconsole.log(metrics)\n\n// for (const key of Object.keys(metrics)) {\n//   metrics[key] = metrics[key].toLocaleString(\"en-US\")\n// }\nreturn [\n  {'json': {metrics}}\n]"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -176,
+        400
+      ],
+      "id": "0da4932a-76ea-46b0-a9e5-ce886ed2c83b",
+      "name": "Beautify Metrics"
+    },
+    {
+      "parameters": {
+        "operation": "xls",
+        "binaryPropertyName": "file",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        -736,
+        16
+      ],
+      "id": "8f3e8355-9834-4b21-8cf2-9f60a0f29bc3",
+      "name": "Extract XLS"
+    },
+    {
+      "parameters": {
+        "operation": "xlsx",
+        "binaryPropertyName": "file",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        -736,
+        192
+      ],
+      "id": "1a98c2e2-a2d8-40f9-95f8-b98784824688",
+      "name": "Extract XLSX"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{$binary.file.fileName}}",
+                    "rightValue": ".xls",
+                    "operator": {
+                      "type": "string",
+                      "operation": "endsWith"
+                    },
+                    "id": "794615c8-e375-4df9-80ef-5fb44a19a5c7"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "xls"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "68d09fa7-935e-4f5f-bf58-247615011f6a",
+                    "leftValue": "={{$binary.file.fileName}}",
+                    "rightValue": ".xlsx",
+                    "operator": {
+                      "type": "string",
+                      "operation": "endsWith"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "xlsx"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "b1f1416d-854d-40f7-9f31-5e9f784a6756",
+                    "leftValue": "={{$binary.file.fileName}}",
+                    "rightValue": ".csv",
+                    "operator": {
+                      "type": "string",
+                      "operation": "endsWith"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "csv"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.3,
+      "position": [
+        -960,
+        32
+      ],
+      "id": "d918e3e6-339c-46b6-b993-7cb371ffbf61",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "binaryPropertyName": "file",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        -736,
+        368
+      ],
+      "id": "11aac2d1-ecad-4a4a-b1d9-e3712561e4d2",
+      "name": "Extract CSV"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nvar dates = []\n\n// Filter for rows containing sales\nconst filtered_rows = items.filter(item => {\n  const name = (item.json['Item Name'] || '').toString().toLowerCase();\n  return name.includes('sales')\n});\n\n// Combine keys together into separate lists\nconst fieldNames = Array.from(\n  new Set(filtered_rows.flatMap(item => Object.keys(item.json)))\n);\n\nconst metrics = {};\nfor (const field of fieldNames) {\n  metrics[field] = filtered_rows.map(item => ( item.json[field] ));\n}\n\n// Single output item containing one list of JSONs per field\nreturn [\n  {\n    json: metrics,\n  },\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -512,
+        16
+      ],
+      "id": "741c4a2d-6474-4a49-844f-c5cd951d3f1e",
+      "name": "Extract rows containing Sales data"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={\n  \"Metrics\": {{ JSON.stringify($(\"Extract rows containing Sales data\").all().map(item => item.json)) }},\n\n  \"Ratios\": {{ JSON.stringify($('Calculate Financial Ratios').all().map(item => item.json)) }},\n  \"Analysis\": {{ $('Create Profit analysis').item.json.output.toJsonString() }}\n}\n ",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        512,
+        16
+      ],
+      "id": "56733ba0-0626-4569-b52c-2d27632d0927",
+      "name": "Final Output"
+    },
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "Combined input",
+              "type": "any"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -1168,
+        320
+      ],
+      "id": "3f8b9c9b-0d46-4c84-896a-414844f6fc03",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "model": "gpt-oss:latest",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        576,
+        272
+      ],
+      "id": "8edbd829-2637-4072-9341-8ad255b04158",
+      "name": "Ollama Chat Model",
+      "credentials": {
+        "ollamaApi": {
+          "id": "KIBWG6y7RujXq0fv",
+          "name": "Ollama account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatDeepSeek",
+      "typeVersion": 1,
+      "position": [
+        576,
+        416
+      ],
+      "id": "92a0ebfb-c659-4970-93cf-35bd82aa0a08",
+      "name": "DeepSeek Chat Model",
+      "credentials": {
+        "deepSeekApi": {
+          "id": "GD7NOF4cyHJji53Z",
+          "name": "DeepSeek account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "gpt-oss-20b-GGUF",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatLemonade",
+      "typeVersion": 1,
+      "position": [
+        416,
+        416
+      ],
+      "id": "d9f6ed17-0fe1-4f4a-8a8a-21e0972736e8",
+      "name": "Lemonade Chat Model",
+      "credentials": {
+        "lemonadeApi": {
+          "id": "MMJXpy5adSbse2Sg",
+          "name": "Lemonade account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-oss-20b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        720,
+        432
+      ],
+      "id": "a59c7d8c-1c59-424a-b052-39dabe95f8b5",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "9XnHL71VT2DSN0eh",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "google/gemma-3-4b-it:free",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        736,
+        272
+      ],
+      "id": "16398cba-eb02-4286-b659-a249d23fbf92",
+      "name": "OpenRouter Chat Model",
+      "credentials": {
+        "openRouterApi": {
+          "id": "KC9dckoDkivNcnRV",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a Senior Business Advisory analyst\nUsing the following business advisory data, generate an analysis report and a summary section. \n        \n**IMPORTANT FORMATTING INSTRUCTIONS for Angular Display:**\n1. **DO NOT** include any title like \"Business Advisory Analysis Report\".\n2. To ensure the section headers can be styled as bold on the front end, you must format them with a unique prefix: **\"//\"** (slash, slash) followed by **Title Case** tex and add surfix **\"\\\\\\\\\"** (backslash, backslash).\n3. **DO NOT** use asterisks (**), colons (:), markdown headings (## or ###), or all-caps for headers.\n4. The final section, which is a concise wrap-up, must be titled **// Summary**.\n5. **DO NOT** remove prefix 0 (zero) like Customer Id, Item Code. \n6. **DO NOT** translate Customer Name and Sales Person into Burmese. Keep Customer Name and Sales Person in their original language.\n7. **DO NOT** Customer ID and **DO NOT** remove surfix from Customer ID. Keep Customer ID in their original value.\n        \nExample Header Format:\n//Executive Summary\\\\\\\\\n\n[Paragraph text starts here...]\n        \nMake sure you provide the following sections:\n- Executive Summary (Total sales, growth, standout performers)\n- Sales Performance Analysis (Salesperson that generated most revenue and who are the customers)\n- Cost Efficiency Analysis (Channel that performed best)\n- Product/Service Insight\n- Actionable Recommendations\n- A final, separate paragraph titled Summary\n\nDo not add any extra fonts (no bolding, underline, etc.) other than the ones specified.\nExtracted Metrics:\n{{ JSON.stringify($(\"Extract rows containing Sales data\").all().map(item => item.json)) }}\nCalculated Ratios:\n{{ JSON.stringify($(\"Calculate Financial Ratios\").all().map(item => item.json)) }}\n        \nPlease provide a clear, professional analysis in 3-4 paragraphs.",
+        "options": {
+          "systemMessage": "=",
+          "maxIterations": 1
+        }
+      },
+      "id": "f1239cc0-360d-4b8d-85f4-b95b80ca52d1",
+      "name": "Create Profit analysis",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "position": [
+        192,
+        16
+      ],
+      "typeVersion": 1.8
+    }
+  ],
+  "pinData": {
+    "Calculate Financial Ratios": [
+      {
+        "json": {
+          "channel_data": {
+            "Retail ": [
+              500000,
+              21000000,
+              10000000,
+              20000000,
+              1025000,
+              5000000,
+              5250000,
+              11500000,
+              9000000,
+              10250000,
+              10500000,
+              17250000,
+              10500000,
+              21000000,
+              20500000,
+              10500000,
+              10250000,
+              500,
+              85000,
+              10000000,
+              10596.97
+            ],
+            "Wholesales": [
+              10000000,
+              20000000,
+              20500000,
+              10250000,
+              10500000,
+              3060000,
+              3000000,
+              17250000,
+              11500000,
+              17250000,
+              10250000,
+              10500000,
+              5000000,
+              10250000,
+              4000,
+              5200000,
+              60000,
+              1053000
+            ]
+          }
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "sales_map": {
+            "Sarah": [
+              500000,
+              10000000,
+              20000000,
+              20500000,
+              21000000,
+              10000000,
+              20000000,
+              1025000,
+              5000000,
+              10250000,
+              10500000,
+              3060000,
+              5250000,
+              11500000,
+              9000000,
+              10250000,
+              10500000,
+              3000000,
+              17250000,
+              11500000,
+              17250000,
+              10250000,
+              10500000,
+              17250000,
+              5000000,
+              10500000,
+              10250000,
+              4000,
+              21000000,
+              20500000,
+              10500000,
+              10250000,
+              500,
+              85000,
+              10000000,
+              1053000,
+              10596.97
+            ],
+            "John Smith": [
+              5200000
+            ],
+            "Dr. Tun": [
+              60000
+            ]
+          }
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "customer_id_counter": {
+            "000010": 1,
+            "000015": 1,
+            "000162": 1,
+            "000191": 2,
+            "000077": 2,
+            "000047": 2,
+            "000024": 2,
+            "000144": 2,
+            "000226": 1,
+            "000017": 1,
+            "000209": 7,
+            "000009": 1,
+            "000225": 2,
+            "000060": 2,
+            "000188": 1,
+            "000005": 1,
+            "000003": 1,
+            "000156": 2,
+            "000234": 2,
+            "000231": 1,
+            "000001": 2,
+            "000227": 2
+          }
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Respond to Webhook": {
+      "main": [
+        []
+      ]
+    },
+    "Google Gemini Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Create Profit analysis",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook1": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculate Financial Ratios": {
+      "main": [
+        [
+          {
+            "node": "Create Profit analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Beautify Metrics": {
+      "main": [
+        []
+      ]
+    },
+    "Extract XLS": {
+      "main": [
+        [
+          {
+            "node": "Extract rows containing Sales data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Extract XLS",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Extract XLSX",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Extract CSV",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract CSV": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract XLSX": {
+      "main": [
+        [
+          {
+            "node": "Extract rows containing Sales data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract rows containing Sales data": {
+      "main": [
+        [
+          {
+            "node": "Calculate Financial Ratios",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Final Output": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Chat Model": {
+      "ai_languageModel": [
+        []
+      ]
+    },
+    "DeepSeek Chat Model": {
+      "ai_languageModel": [
+        []
+      ]
+    },
+    "Lemonade Chat Model": {
+      "ai_languageModel": [
+        []
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        []
+      ]
+    },
+    "OpenRouter Chat Model": {
+      "ai_languageModel": [
+        []
+      ]
+    },
+    "Create Profit analysis": {
+      "main": [
+        [
+          {
+            "node": "Final Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "07967576-aa09-4213-b47d-52e32ac518a8",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "d2d25dc1d236552326045bfe45ce09e40727a51e5ef5e539d11cd000e5120393"
+  },
+  "id": "jpMvUOeREwn0C69b",
+  "tags": [
+    {
+      "updatedAt": "2025-12-01T03:15:16.469Z",
+      "createdAt": "2025-12-01T03:15:16.469Z",
+      "id": "4h4k9rh28tp0mYbY",
+      "name": "BA Analysis"
+    }
+  ]
+}

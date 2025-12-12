@@ -1,0 +1,486 @@
+{
+  "name": "Business Advisory Analysis Finance",
+  "nodes": [
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{$json}}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        752,
+        16
+      ],
+      "id": "9d5fac4c-79a1-4ded-a0a0-02300c30ca74",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "The URL of the Google search query for the term is \"I AM A BANANA\"",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        528,
+        400
+      ],
+      "id": "89399353-8a2d-476b-8fb7-de2c73cae15d",
+      "name": "Respond to Webhook (Text)"
+    },
+    {
+      "parameters": {
+        "content": "### Step 3 Profit Analysis\n\n$json refers to the current item only. So need to use item(x) to iterate ratios",
+        "height": 627,
+        "width": 534,
+        "color": 7
+      },
+      "id": "2ac4e673-7e3d-4379-bc2c-2fb8ff0d50a2",
+      "name": "Sticky Note5",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        160,
+        -96
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        208,
+        272
+      ],
+      "id": "d561d80e-ef1b-4fef-a9a0-073666f816b1",
+      "name": "Google Gemini Chat Model2",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "ATpNjEZLP3EuFq1O",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a senior financial analyst. \nUsing the following financial data, provide:\n- Summary of performance\n- Strengths and weaknesses\n- Cost efficiency analysis\n- Recommendations for improvement\n\nExtracted Metrics:\n{{ JSON.stringify($('Extract Metrics').item.json.metrics) }}\nCalculated Ratios:\n{{  JSON.stringify($json.ratios) }}\n\nPlease provide a clear, professional analysis in 3-4 paragraphs.",
+        "options": {
+          "systemMessage": "="
+        }
+      },
+      "id": "534729e4-2c45-4021-a49f-353d846eaf4d",
+      "name": "Create Profit analysis",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "position": [
+        208,
+        16
+      ],
+      "typeVersion": 1.8
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={\n  \"Metrics\": {{ $('Extract Metrics').item.json.metrics.toJsonString() }}\n  \"Ratios\": {{ $('Calculate Financial Ratios').item.json.ratios.toJsonString() }},\n  \"Analysis\": {{ $('Create Profit analysis').item.json.output.toJsonString() }}\n}\n ",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        528,
+        16
+      ],
+      "id": "49beb05d-ea9d-4ce6-8b72-aa58d17b105b",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "content": "### Step 1: Read and extract data from pdf\nEmbed the incoming chat message and use it retrieve relevant chunks from the vector store. These are passed to the model to formulate an answer ",
+        "height": 627,
+        "width": 534,
+        "color": 7
+      },
+      "id": "73e47ec6-6be4-473e-9338-ed25f1711ceb",
+      "name": "Sticky Note1",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -912,
+        -96
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "### Step 2: Calculate ratios",
+        "height": 627,
+        "width": 294,
+        "color": 7
+      },
+      "id": "7ea677f6-7406-4daa-9f62-007e11f11900",
+      "name": "Sticky Note4",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -288,
+        -96
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "finance",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1056,
+        16
+      ],
+      "id": "5b4f3682-bbfc-4902-ad43-4e838beab724",
+      "name": "Webhook1",
+      "webhookId": "b1a597a0-75f6-4ea4-8e49-8c061fba5c93"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        -192,
+        208
+      ],
+      "id": "9ba979d3-552f-4ef3-b3e6-113a5b0fdab0",
+      "name": "Respond to Webhook1"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={\n  \"text\": \"{{ $json.text }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -800,
+        256
+      ],
+      "id": "ea6cbf39-fe44-486d-bb3f-2855535c340f",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "binaryPropertyName": "file",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        -800,
+        16
+      ],
+      "id": "53a63fae-f741-4671-9dca-ed1246d0d634",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5215dd26-09d3-4234-b70c-9d4d431c1098",
+              "name": "Gross Margin",
+              "value": "={{ (($json.metrics['Total Revenue'] - $json.metrics['Total Cost of Sales'])/$json.metrics['Total Revenue'] * 100).toFixed(2) }} ",
+              "type": "number"
+            },
+            {
+              "id": "9fd1e0b5-dfb7-4695-89da-cb09529534b3",
+              "name": "Net Profit Margin",
+              "value": "={{ (($json.metrics[\"Net Profit\"]/$json.metrics[\"Total Revenue\"]) * 100).toFixed(2) }}",
+              "type": "number"
+            },
+            {
+              "id": "67a0ca9e-cd22-4709-a87a-c6c1258ec954",
+              "name": "Profit Before Tax Margin",
+              "value": "={{\n  (() => {\n    const pbt = $json.metrics[\"Profit before Tax\"];\n    const revenue  = $json.metrics[\"Total Revenue\"];\n\n    // Treat missing/null as invalid\n    if (pbt == null || revenue == null) {\n      return null;\n    }\n\n    const ratio = (pbt / revenue) * 100;\n\n    // Guard against NaN and Infinity\n    if (isNaN(ratio) || !isFinite(ratio)) {\n      return null;\n    }\n\n    return ratio.toFixed(2);\n  })()\n}}\n",
+              "type": "number"
+            },
+            {
+              "id": "0894aaf6-2be6-4cfc-ac1d-cc4c0ccb6930",
+              "name": "Expense Ratio",
+              "value": "={{ (($json.metrics[\"Total Expenses\"]/$json.metrics[\"Total Revenue\"]) * 100).toFixed(2) }}",
+              "type": "number"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -192,
+        384
+      ],
+      "id": "5e8c3c7c-7081-4ad6-9b8e-27cf06841c3b",
+      "name": "Calculate Values (Includes profit before tax margin)"
+    },
+    {
+      "parameters": {
+        "jsCode": "const m = $input.first().json.metrics;\nvar ratios = {}\n// console.log(m)\n\n// Calculating ratios for m\nif ('Total Revenue' in m && 'Total Cost of Sales' in m) {\n  const revenue = m['Total Revenue'];\n  const cost = m['Total Cost of Sales'];\n  if (revenue !== 0) {\n    const grossMargin = ((revenue - cost) / revenue) * 100;\n    ratios['Gross Margin'] = `${grossMargin.toFixed(2)}%`;\n    console.log(`Calculated Gross Margin: ${ratios['Gross Margin']}`);\n  } else {\n    console.log('Cannot calculate Gross Margin: Total Revenue is zero');\n  }\n}\n\nif ('Net Profit' in m && 'Total Revenue' in m) {\n  const revenue = m['Total Revenue'];\n  const netProfit = m['Net Profit'];\n  if (revenue !== 0) {\n    const netMargin = (netProfit / revenue) * 100;\n    ratios['Net Profit Margin'] = `${netMargin.toFixed(2)}%`;\n    console.log(`Calculated Net Profit Margin: ${ratios['Net Profit Margin']}`);\n  } else {\n    console.log('Cannot calculate Net Profit Margin: Total Revenue is zero');\n  }\n}\n\nif ('Profit Before Tax' in m && 'Total Revenue' in m) {\n  const revenue = m['Total Revenue'];\n  const pbt = m['Profit Before Tax'];\n  if (revenue !== 0) {\n    const pbtMargin = (pbt / revenue) * 100;\n    ratios['PBT Margin'] = `${pbtMargin.toFixed(2)}%`;\n    console.log(`Calculated PBT Margin: ${ratios['PBT Margin']}`);\n  } else {\n    console.log('Cannot calculate PBT Margin: Total Revenue is zero');\n  }\n}\n\nif ('Total Expenses' in m && 'Total Revenue' in m) {\n  const revenue = m['Total Revenue'];\n  const expenses = m['Total Expenses'];\n  if (revenue !== 0) {\n    const expenseRatio = (expenses / revenue) * 100;\n    ratios['Expense Ratio'] = `${expenseRatio.toFixed(2)}%`;\n    console.log(`Calculated Expense Ratio: ${ratios['Expense Ratio']}`);\n  } else {\n    console.log('Cannot calculate Expense Ratio: Total Revenue is zero');\n  }\n}\n\nreturn [\n  {'json': {ratios}}\n]"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -192,
+        16
+      ],
+      "id": "ec1133fa-c525-4d44-9c6b-4a6dc87c11f5",
+      "name": "Calculate Financial Ratios"
+    },
+    {
+      "parameters": {
+        "jsCode": "const metrics = $('Extract Metrics').first().json.metrics\n\nfor (const key of Object.keys(metrics)) {\n  metrics[key] = metrics[key].toLocaleString(\"en-US\")\n}\nreturn [\n  {'json': {metrics}}\n]"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        528,
+        192
+      ],
+      "id": "785adbe3-2418-4c46-81e9-ed152a5459dc",
+      "name": "Beautify Metrics"
+    },
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "Combined input",
+              "type": "any"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -1056,
+        192
+      ],
+      "id": "a4383be2-3b04-4a89-a102-1b71fd9d1bba",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "jsCode": "const text = $input.first().json.text || '';\nconsole.log(text)\n\n// Extract key totals from your PDF\nvar metrics = {};\nconst patterns = {\n  \"Total Revenue\": /Total Revenue\\s+([\\d,]+\\.\\d+)/i,\n  \"Total Cost of Sales\": /Total Cost of sales\\s+\\(([\\d,]+\\.\\d+)\\)/i,\n  \"Profit Before Tax\": /Profit Before Tax\\s+([\\d,]+\\.\\d+)/i,\n  \"Total Expenses\": /Total Expenses\\s+\\(([\\d,]+\\.\\d+)\\)/i,\n  \"Net Profit\": /Net Profit\\/\\(Loss\\)\\s+([\\d,]+\\.\\d+)/i,\n  \"Income Tax Expenses\": /Income Tax Expenses\\s+([\\d,]+\\.\\d+)/i,\n  \"Profit For the Year\": /Profit For the Year\\s+([\\d,]+\\.\\d+)/i,\n};\n\nfor (const [key, pattern] of Object.entries(patterns)) {\n  const match = text.match(pattern);\n  if (match) {\n    const raw = match[1].replace(/,/g, '');\n    const value = parseFloat(raw);\n    if (!Number.isNaN(value)) {\n      metrics[key] = value;\n      console.log(`Found ${key}: ${value}`);\n    } else {\n      console.log(`Could not parse value for ${key}: ${match[1]}`);\n    }\n  } else {\n    console.log(`Could not find ${key}`);\n  }\n}\n\n// console.log(metrics)\n\nreturn [\n  {'json': {metrics}}\n  // metrics\n]"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -560,
+        16
+      ],
+      "id": "6a072954-886f-4634-a9b9-9a4221f0da4b",
+      "name": "Extract Metrics"
+    },
+    {
+      "parameters": {
+        "model": "gpt-oss:latest",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        784,
+        400
+      ],
+      "id": "6a0a11bd-509b-4787-91d4-9f2a8c19959c",
+      "name": "Ollama Chat Model",
+      "credentials": {
+        "ollamaApi": {
+          "id": "KIBWG6y7RujXq0fv",
+          "name": "Ollama account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "google/gemma-3-4b-it:free",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        896,
+        384
+      ],
+      "id": "d7d9fe10-20ca-4899-be12-13c6e264af4a",
+      "name": "OpenRouter Chat Model1",
+      "credentials": {
+        "openRouterApi": {
+          "id": "KC9dckoDkivNcnRV",
+          "name": "OpenRouter account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Respond to Webhook": {
+      "main": [
+        []
+      ]
+    },
+    "Google Gemini Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Create Profit analysis",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Profit analysis": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook1": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Extract Metrics",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculate Financial Ratios": {
+      "main": [
+        [
+          {
+            "node": "Create Profit analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Beautify Metrics": {
+      "main": [
+        []
+      ]
+    },
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Metrics": {
+      "main": [
+        [
+          {
+            "node": "Calculate Financial Ratios",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Chat Model": {
+      "ai_languageModel": [
+        []
+      ]
+    },
+    "OpenRouter Chat Model1": {
+      "ai_languageModel": [
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timeSavedMode": "fixed",
+    "timezone": "Asia/Singapore",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "2424f96b-272a-4b31-a406-550fc4837c9f",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "d2d25dc1d236552326045bfe45ce09e40727a51e5ef5e539d11cd000e5120393"
+  },
+  "id": "MEXROJKmUtu7WndI",
+  "tags": [
+    {
+      "updatedAt": "2025-12-01T03:15:16.469Z",
+      "createdAt": "2025-12-01T03:15:16.469Z",
+      "id": "4h4k9rh28tp0mYbY",
+      "name": "BA Analysis"
+    }
+  ]
+}

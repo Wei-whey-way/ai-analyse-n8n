@@ -1,0 +1,27 @@
+
+# Quick Start n8n
+
+Running n8n with npx (requires Node.js)
+```
+npx n8n
+```
+
+Or running with Docker
+```
+docker volume create n8n_data
+docker run -it --rm --name n8n -p 5678:5678 -v n8n_data:/home/node/.n8n docker.n8n.io/n8nio/n8n
+```
+
+Editor available at http://localhost:5678
+
+# Set up
+Visual representation of workflows are included in their representative folders
+
+1. Import Workflow
+Load the three json files into three separate n8n instance.
+
+2. Connect Credentials
+For each workflow, click on the 'Google Gemini Chat Model' node and add in your API. Node is changable to other AI models if necessary.
+
+3. Triggering Workflow (Requires running api.py and test.py files)
+The workflows are triggered by hosting api.py and running test_api.py, test_api_ba.py, and test_api_combined.py for finance, sales, and the full business advisory analysis respectively.

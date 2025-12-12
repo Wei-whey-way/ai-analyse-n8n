@@ -1,0 +1,581 @@
+{
+  "name": "Business Advisory Analysis Combined",
+  "nodes": [
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{$json}}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        512,
+        32
+      ],
+      "id": "04453541-ea5b-4362-8444-e1b6923ab54f",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "content": "### Step 3 Profit Analysis\n\n$json refers to the current item only. So need to use item(x) to iterate ratios",
+        "height": 627,
+        "width": 726,
+        "color": 7
+      },
+      "id": "a731ba8f-8df0-4fb7-a616-d88ac3dabd57",
+      "name": "Sticky Note5",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -80,
+        -80
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "### Step 1: Check files for analysis then redirect to corresponding webhook",
+        "height": 627,
+        "width": 838,
+        "color": 7
+      },
+      "id": "bf55ed34-e5b6-485e-adf3-532c359773d9",
+      "name": "Sticky Note1",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1520,
+        -80
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "### Step 2: Extract analysis",
+        "height": 627,
+        "width": 406,
+        "color": 7
+      },
+      "id": "27fa9740-ba42-45f8-bd06-39cbb2fce022",
+      "name": "Sticky Note4",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -592,
+        -80
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "combined",
+        "responseMode": "responseNode",
+        "options": {
+          "rawBody": true
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1776,
+        48
+      ],
+      "id": "3c440325-41c5-4415-b598-a00628907902",
+      "name": "Webhook1",
+      "webhookId": "0e6c6b38-acbc-4a18-9416-4fe0c6e1572b"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        -832,
+        400
+      ],
+      "id": "13855616-d640-462a-bde5-7750b020f192",
+      "name": "Respond to Webhook1"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={\n  \"analysis_finance\": {{ $('Merge').all()[0].json.finance_analysis.toJsonString() }},\n  \"analysis_sales\": {{ $('Merge').all()[1].json.sales_analysis.toJsonString() }},\n  \"analysis\": {{ $('Create Combined Analysis').item.json.output.toJsonString() }}\n ",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        304,
+        32
+      ],
+      "id": "0ebcbb66-97b3-410c-9e00-7c7bafbaeaa5",
+      "name": "Final Output"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{$binary.finance_file.fileName && $binary.sales_file.fileName}}",
+                    "rightValue": ".pdf",
+                    "operator": {
+                      "type": "string",
+                      "operation": "exists",
+                      "singleValue": true
+                    },
+                    "id": "794615c8-e375-4df9-80ef-5fb44a19a5c7"
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.3,
+      "position": [
+        -1472,
+        48
+      ],
+      "id": "5ea77fa6-41ea-4f8a-903f-bea7f3d2d697",
+      "name": "Check for finance and sales files"
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.item;\n\nconst finance = item.binary.finance_file;\nconst sales = item.binary.sales_file;\n\nlet out = []\nif (finance) {\n  out.push({\n    json: { type: 'finance' },\n    binary: { file: finance },\n  });\n}\nif (sales) {\n  out.push({\n    json: { type: 'sales' },\n    binary: { file: sales },\n  });\n}\n\nreturn out"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1248,
+        32
+      ],
+      "id": "31a46a22-bbc1-4912-896b-a4faed9c347a",
+      "name": "Separate files to run separate analysis"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "6d026897-841a-4060-bcd6-2c890244c4ef",
+              "leftValue": "={{$binary.file.fileType}}",
+              "rightValue": "pdf",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1056,
+        32
+      ],
+      "id": "59682c1d-4f5a-4405-b3ab-fdd171532524",
+      "name": "Split input files to call webhooks"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.first().json.Analysis;\n// console.log(items)\n\nreturn {\n  'finance_analysis': items\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -528,
+        16
+      ],
+      "id": "a1a61ea0-f49e-45ba-9f3c-e8784deed957",
+      "name": "Extract rows containing finance data"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "MEXROJKmUtu7WndI",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/MEXROJKmUtu7WndI",
+          "cachedResultName": "Business Advisory Analysis Finance"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Combined input": "={{$binary}}"
+          },
+          "matchingColumns": [
+            "Combined input"
+          ],
+          "schema": [
+            {
+              "id": "Combined input",
+              "displayName": "Combined input",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        -832,
+        16
+      ],
+      "id": "11d7e292-cde3-47b6-888c-f479d8078df7",
+      "name": "Finance Analysis"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "jpMvUOeREwn0C69b",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/jpMvUOeREwn0C69b",
+          "cachedResultName": "Business Advisory Analysis Sales"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Combined input": "={{$binary}}"
+          },
+          "matchingColumns": [
+            "Combined input"
+          ],
+          "schema": [
+            {
+              "id": "Combined input",
+              "displayName": "Combined input",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        -832,
+        208
+      ],
+      "id": "d353cae6-aa5e-44fd-a517-d130a1c04d65",
+      "name": "Sales Analysis"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.first().json.Analysis;\n// console.log(items)\n\nreturn {\n  'sales_analysis': items\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -528,
+        208
+      ],
+      "id": "0e192fe6-2c9b-4246-b6fd-c26ded1b86d1",
+      "name": "Extract rows containing sales data"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a Senior Business Advisory analyst who needs to generate a report containing information about your company's financial status and operation, and overall business suggestion.\n\nYou have two analysis reports generated from financial statement and sales statement. Merge the two analysis reports into one comprehensive report.\n        \nFinancial Analysis:\n```{{ $('Merge').all()[0].json.finance_analysis }}```\n\nSales Analysis:\n```{{ $('Merge').all()[1].json.sales_analysis }}```\n\nPlease provide a clear, professional analysis with one paragraph each containing information about your company's financial status, their operation details, and overall business suggestion.",
+        "options": {
+          "systemMessage": "="
+        }
+      },
+      "id": "e1078777-b05f-4eac-81a0-67d4b327ff01",
+      "name": "Create Combined Analysis",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "position": [
+        -32,
+        32
+      ],
+      "typeVersion": 1.8
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -336,
+        32
+      ],
+      "id": "865183fd-2fe9-43a4-b201-cb2a6dba615f",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "model": "z-ai/glm-4.5-air:free",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        128,
+        352
+      ],
+      "id": "64f6e069-8084-4ed4-82af-868955581e4f",
+      "name": "OpenRouter Chat Model1",
+      "credentials": {
+        "openRouterApi": {
+          "id": "KC9dckoDkivNcnRV",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -32,
+        352
+      ],
+      "id": "647b9b49-826b-4ece-9126-452d2be6d50d",
+      "name": "Google Gemini Chat Model2",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "ZP1FmoP8pcHT1kM2",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "Merge": [
+      {
+        "json": {
+          "finance_analysis": "As a Senior Financial Analyst, my assessment of the provided financial data indicates a business with exceptionally strong performance and profitability.\n\n**Summary of Performance:**\nThe company demonstrates outstanding financial health, generating a robust **Total Revenue of \\$889.3 million**. A key highlight is its remarkable profitability, evidenced by a **Gross Margin of 72.15%** and an impressive **Net Profit Margin of 43.20%**. This translates into a substantial **Net Profit of \\$384.2 million** before taxes, ultimately yielding a **Profit For the Year of \\$288.2 million** after accounting for income tax expenses. These figures underscore a highly efficient and successful business model capable of converting a significant portion of its revenue into shareholder value.\n\n**Strengths and Weaknesses:**\n**Strengths** are unequivocally dominant. The extraordinarily high Gross Margin suggests either superior pricing power within its market or highly efficient direct cost management relative to its products/services. This strong gross profitability flows directly into a top-tier Net Profit Margin, indicating excellent control over both direct and indirect costs relative to revenue, resulting in a very healthy bottom line. The substantial revenue base also points to significant market presence.\n**Weaknesses**, while not critically impairing, lie primarily in the operational expense and tax burden. The **Expense Ratio of 28.94%** (Total Expenses relative to Total Revenue) indicates that operating expenses consume a notable portion of the revenue, which, while manageable given the high gross margin, still represents a significant outflow. Furthermore, the **Income Tax Expenses of \\$96.1 million** represent a substantial reduction from the pre-tax profit.\n\n**Cost Efficiency Analysis:**\nThe company exhibits excellent cost efficiency at the gross profit level, with the **Total Cost of Sales** being relatively low at \\$247.7 million compared to revenue, driving the high Gross Margin. However, the **Total Expenses** of \\$257.4 million, which contribute to the 28.94% Expense Ratio, warrant continuous scrutiny. While the company's high Net Profit Margin buffers the impact of these operating expenses, strategic optimization could unlock even greater profitability. The efficiency beyond gross profit is good, but not as stellar as the gross profit generation, suggesting that while the core product/service delivery is highly efficient, there might be further room for streamlining administrative, marketing, or research & development costs depending on their composition within \"Total Expenses.\"\n\n**Recommendations for Improvement:**\n1.  **Strategic Expense Review:** Conduct a detailed breakdown and analysis of the \\$257.4 million in \"Total Expenses.\" Identify specific categories (e.g., administrative, sales & marketing, R&D) and evaluate their necessity and efficiency. Benchmark these expenses against industry peers to identify areas for potential reduction or process improvement without compromising operational effectiveness or growth initiatives.\n2.  **Optimize Tax Strategy:** Given the significant income tax expense, explore proactive and legally compliant tax planning strategies. This could involve investigating available tax credits, deductions, or optimizing organizational structure to minimize tax liabilities and increase the \"Profit For the Year.\"\n3.  **Sustain Gross Profit Margin:** Actively monitor and protect the highly favorable Gross Margin. Continue to explore supplier negotiations, production efficiencies, and pricing strategies to ensure this core strength is maintained and, where possible, marginally improved, as it is a fundamental driver of overall profitability.\n4.  **Strategic Reinvestment:** With such strong profitability and cash generation potential, consider strategic reinvestment of a portion of the profits into growth initiatives such as market expansion, product innovation (R&D), or technology upgrades to secure long-term competitive advantage and further increase revenue and profit in the future."
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "sales_analysis": "//Executive Summary\\\\\nTotal sales recorded for the period amount to 362,128,596.97. The sales performance is heavily influenced by a single salesperson, Sarah, who is responsible for the vast majority of revenue. Customer engagement is concentrated, with a few key customers driving significant sales volume. The Retail channel, based on the provided aggregate data, appears to be the leading revenue generator.\n\n//Sales Performance Analysis\\\\\nSalesperson Sarah stands out as the top performer, generating 356,868,596.97 in total sales, representing approximately 98.5% of the total revenue. John Smith contributed 5,200,000, and Dr. Tun contributed 60,000. Customer analysis reveals that customer ID 000209 is the highest revenue contributor with 79,500,000 in sales, followed by customers 000191 and 000156, both contributing 41,500,000. Customer 000209 also accounts for the highest number of transactions (7).\n\n//Cost Efficiency Analysis\\\\\nAn analysis of the sales channels indicates that the Retail channel generated a total of 194,116,096.97, while the Wholesales channel generated 176,177,000. Based on these figures, the Retail channel appears to be the more effective in terms of revenue generation. It is noted that the sum of the provided channel totals (370,293,096.97) is slightly higher than the overall total sales (362,128,596.97) derived from individual transaction values and salesperson totals, suggesting a potential discrepancy in the channel aggregation data. Despite this, the Retail channel maintains its lead based on the provided channel-specific figures.\n\n//Product/Service Insight\\\\\nThe provided data offers limited specific product or service insights. The \"Item Name\" field primarily describes the sales type (e.g., \"Sales for January,\" \"retail sales for may,\" \"whole sales for may\") rather than specific products or services. This lack of granular detail prevents a deeper analysis into popular products, service performance, or inventory optimization opportunities.\n\n//Actionable Recommendations\\\\\n1. **Leverage Top Performer:** Investigate Sarah's sales strategies, customer engagement techniques, and training methods to replicate her success across other sales personnel. Consider incentive programs to motivate other team members.\n2. **Key Customer Relationship Management:** Prioritize and nurture relationships with high-value customers such as 000209, 000191, and 000156. Implement loyalty programs or specialized offerings to ensure retention and continued revenue growth from these accounts.\n3. **Channel Optimization:** While Retail leads in revenue according to the provided channel breakdown, analyze the operational costs and profitability margins for both Retail and Wholesales channels to assess true efficiency. Explore strategies to enhance Wholesales channel performance, potentially through targeted promotions or expanded product lines.\n4. **Data Quality Enhancement:** Address the identified discrepancy between total sales and the sum of channel sales to ensure accuracy in future reporting. Furthermore, implement a more detailed product/service categorization system within the sales data to enable granular insights into product performance and inventory management.\n\n//Summary\\\\\nThe business demonstrates strong overall sales, primarily driven by the exceptional performance of salesperson Sarah and a concentrated base of high-value customers. The Retail channel contributes significantly to revenue. However, limitations in product-specific data and a minor inconsistency in aggregated channel figures suggest areas for data quality improvement and more granular analysis to fully optimize sales strategies and operational efficiency."
+        },
+        "pairedItem": {
+          "item": 0,
+          "input": 1
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Respond to Webhook": {
+      "main": [
+        []
+      ]
+    },
+    "Webhook1": {
+      "main": [
+        [
+          {
+            "node": "Check for finance and sales files",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Final Output": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check for finance and sales files": {
+      "main": [
+        [
+          {
+            "node": "Separate files to run separate analysis",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Separate files to run separate analysis": {
+      "main": [
+        [
+          {
+            "node": "Split input files to call webhooks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split input files to call webhooks": {
+      "main": [
+        [
+          {
+            "node": "Finance Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Sales Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract rows containing finance data": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Finance Analysis": {
+      "main": [
+        [
+          {
+            "node": "Extract rows containing finance data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sales Analysis": {
+      "main": [
+        [
+          {
+            "node": "Extract rows containing sales data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract rows containing sales data": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Create Combined Analysis": {
+      "main": [
+        [
+          {
+            "node": "Final Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Create Combined Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Create Combined Analysis",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model1": {
+      "ai_languageModel": [
+        []
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "d08a2251-0b96-47ff-8a2e-146c67282184",
+  "meta": {
+    "instanceId": "d2d25dc1d236552326045bfe45ce09e40727a51e5ef5e539d11cd000e5120393"
+  },
+  "id": "gevX4pEquAWG8mJw",
+  "tags": [
+    {
+      "updatedAt": "2025-12-01T03:15:16.469Z",
+      "createdAt": "2025-12-01T03:15:16.469Z",
+      "id": "4h4k9rh28tp0mYbY",
+      "name": "BA Analysis"
+    }
+  ]
+}

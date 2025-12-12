@@ -28,50 +28,6 @@ def test_health_check():
         print(f"❌ Health check error: {e}")
         return False
 
-# def test_upload_analysis(pdf_file_path: str, max_wait_time: int = 300):
-#     """Test file upload and analysis"""
-#     print(f"\n📤 Now uploading file for analysis in n8n: {pdf_file_path}")
-    
-#     if not os.path.exists(pdf_file_path):
-#         print(f"❌ File not found: {pdf_file_path}")
-#         return None
-    
-#     try:
-#         """Wait for analysis to complete"""
-#         print(f"\n⏳ Waiting for analysis to complete...")
-#         start_time = time.time()
-#         while time.time() - start_time < max_wait_time:
-#             try:
-#                 # Upload file
-#                 with open(pdf_file_path, 'rb') as f:
-#                     files = {'file': (os.path.basename(pdf_file_path), f, 'application/pdf')}
-#                     response = requests.post(
-#                         # 'http://localhost:5678/webhook-test/b1a597a0-75f6-4ea4-8e49-8c061fba5c93',
-#                         'http://localhost:5678/webhook/b1a597a0-75f6-4ea4-8e49-8c061fba5c93',
-#                         files=files,
-#                         # params={'analysis_type': 'full'}
-#                     )
-                
-#                 # print('Debug successful n8n analysis', response.json())
-#                 if response.status_code == 200:
-#                     data = response.json()
-#                     print(f"✅ n8n retrieval successful: {data.keys()}")
-#                     return data
-#                 else:
-#                     print(f"❌ Upload failed: {response.status_code} - {response.text}")
-#                     return
-#             except Exception as e:
-#                 print(f"⚠️  Status check error: {e}")
-            
-#             time.sleep(5)  # Wait 5 seconds before checking again
-        
-#         print(f"⏰ Timeout waiting for analysis to complete")
-#         exit
-
-#     except Exception as e:
-#         print(f"❌ Upload error: {e}")
-#         return
-
 def test_upload_analysis(pdf_file_path: str):
     """Test file upload and analysis"""
     print(f"\n📤 Testing file upload analysis for: {pdf_file_path}")
@@ -192,23 +148,6 @@ def get_results(request_id: str):
     except Exception as e:
         print(f"❌ Results retrieval error: {e}")
         return None
-
-# def get_results(state: dict):
-#     """Get analysis results"""
-#     # print(f"\n📊 Getting results for {state}...")
-    
-#     try:
-#         #Output results
-#         print("✅ Results retrieved successfully!")
-#         print(f"📈 Metrics: {state['Metrics']}")
-#         print(f"📊 Ratios: {state['Ratios']}")
-#         print(f"🤖 Analysis: {state['Analysis']}")
-#         # print(f"⏱️  Processing time: {state['processing_time']:.2f} seconds")
-#         return
-    
-#     except Exception as e:
-#         print(f"❌ Results retrieval error: {e}")
-#         return None
 
 def test_queue_status():
     """Test queue status endpoint"""

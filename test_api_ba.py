@@ -58,52 +58,6 @@ def test_upload_analysis(xlsx_file_path: str):
         print(f"❌ Upload error: {e}")
         return None
 
-# def test_upload_analysis(xlsx_file_path: str, max_wait_time: int = 300):
-#     """Test file upload and analysis"""
-#     print(f"\n📤 Testing file upload analysis for: {xlsx_file_path}")
-    
-#     if not os.path.exists(xlsx_file_path):
-#         print(f"❌ File not found: {xlsx_file_path}")
-#         return None
-    
-#     try:
-#         """Wait for analysis to complete"""
-#         print(f"\n⏳ Waiting for analysis to complete...")
-#         start_time = time.time()
-#         while time.time() - start_time < max_wait_time:
-#             try:
-#                 # Upload file
-#                 with open(xlsx_file_path, 'rb') as f:
-#                     files = {'file': (os.path.basename(xlsx_file_path), f, 'application/xlsx')}
-#                     response = requests.post(
-#                         # 'http://localhost:5678/webhook-test/sales',
-#                         'http://localhost:5678/webhook/sales',
-#                         files=files,
-#                         # params={'analysis_type': 'full'}
-#                     )
-                
-#                 # print('Debug output', response)
-#                 # return
-                
-#                 if response.status_code == 200:
-#                     data = response.json()
-#                     print(f"✅ n8n retrieval successful: {data.keys()}")
-#                     return data
-#                 else:
-#                     print(f"❌ Upload failed: {response.status_code} - {response.text}")
-#                     return None
-#             except Exception as e:
-#                 print(f"⚠️  Status check error: {e}")
-            
-#             time.sleep(5)  # Wait 5 seconds before checking again
-        
-#         print(f"⏰ Timeout waiting for analysis to complete")
-#         exit
-            
-#     except Exception as e:
-#         print(f"❌ Upload error: {e}")
-#         return None
-
 def wait_for_completion(request_id: str, max_wait_time: int = 300):
     """Wait for analysis to complete"""
     print(f"\n⏳ Waiting for analysis {request_id} to complete...")

@@ -251,15 +251,6 @@ async def process_ba_analysis(request_id: str, file_path_finance: str, file_path
     try:
         ba_analysis_queue[request_id]["status"] = "processing"
 
-        # Initialize finance and sales states
-        # state_finance: PDFStatementState = {
-        #     "file_path": file_path_finance, "text": "", "metrics": {}, "ratios": {}, "analysis": ""
-        # }
-        
-        # state_sales: ExcelStatementState = {
-        #     "file_path": file_path_sales, "text": "", "metrics": {}, "ratios": {}, "analysis": ""
-        # }
-
         with open(file_path_sales, 'rb') as f_sales, open(file_path_finance, 'rb') as f_finance:
             files = {
                 'finance_file': (os.path.basename(file_path_finance), f_finance, 'application/pdf'),
@@ -267,6 +258,7 @@ async def process_ba_analysis(request_id: str, file_path_finance: str, file_path
             }
 
             state = requests.post(
+                # "http://localhost:5678/webhook-test/combined",
                 "http://localhost:5678/webhook/combined",
                 files=files,
                 params={'analysis_type': 'full'}
